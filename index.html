@@ -25,7 +25,7 @@
 </head>
 <body>
 
-  <!-- Modal Pilih Warna & Mode -->
+  <!-- Modal Pilih Warna -->
   <div id="modal">
     <div class="modal-box">
       <h2>Pilih Warna Bidak</h2>
@@ -85,7 +85,9 @@
         draggable: true,
         position: 'start',
         orientation: playerColor,
-        onDrop: handleMove
+        onDrop: handleMove,
+        // Memuat gambar bidak langsung dari CDN resmi chessboardjs
+        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
       });
 
       updateGameState();
@@ -119,10 +121,10 @@
     function speakMove(text) {
       var isVoiceOn = document.getElementById('voiceToggle').checked;
       if (isVoiceOn && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel(); // Hentikan suara sebelumnya jika beruntun
+        window.speechSynthesis.cancel();
         var utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'id-ID';
-        utterance.rate = 1.2; // Mempercepat tempo bicara untuk mode Blitz/Bullet
+        utterance.rate = 1.2;
         window.speechSynthesis.speak(utterance);
       }
     }
