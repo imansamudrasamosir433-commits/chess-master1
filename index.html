@@ -3,47 +3,65 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Penasihat Catur Taktis</title>
+  <title>Penasihat Catur Taktis (Mode Cepat)</title>
   <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121214; color: #fff; text-align: center; margin: 0; padding: 20px; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121214; color: #fff; text-align: center; margin: 0; padding: 15px; }
     #modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 100; }
-    .modal-box { background: #1e1e24; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); border: 1px solid #333; }
-    .btn { padding: 10px 20px; margin: 5px; font-size: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 6px; transition: 0.2s; }
+    .modal-box { background: #1e1e24; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); border: 1px solid #333; max-width: 90vw; }
+    .btn { padding: 10px 18px; margin: 5px; font-size: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 6px; transition: 0.2s; }
     .btn-white { background: #edf2f4; color: #111; }
     .btn-black { background: #4a4e69; color: #fff; }
     .btn-danger { background: #e63946; color: #fff; }
     .btn-action { background: #3a86ff; color: #fff; }
     .btn:hover { transform: scale(1.05); }
-    #board-container { display: flex; flex-direction: column; align-items: center; margin-top: 10px; }
-    #board { width: 400px; max-width: 90vw; }
-    .info-card { background: #1e1e24; margin-top: 15px; padding: 15px 25px; border-radius: 8px; max-width: 400px; width: 90vw; border: 1px solid #333; }
-    .highlight { color: #00ff87; font-weight: bold; font-size: 22px; display: block; margin-top: 5px; }
+    #board-container { display: flex; flex-direction: column; align-items: center; margin-top: 5px; }
+    #board { width: 380px; max-width: 88vw; }
+    .info-card { background: #1e1e24; margin-top: 12px; padding: 15px; border-radius: 8px; max-width: 380px; width: 88vw; border: 1px solid #333; }
+    .highlight { color: #00ff87; font-weight: bold; font-size: 26px; display: block; margin-top: 5px; letter-spacing: 1px; }
     .turn-info { color: #ffbe0b; font-weight: bold; }
+    select, input[type="checkbox"] { font-size: 14px; padding: 5px; margin-top: 5px; border-radius: 4px; }
   </style>
 </head>
 <body>
 
-  <!-- Modal Pilih Warna -->
+  <!-- Modal Pilih Warna & Mode -->
   <div id="modal">
     <div class="modal-box">
-      <h2>Pilih Warna Bidak Kamu</h2>
-      <p>Pilih warna yang kamu pakai saat melawan adikmu:</p>
+      <h2>Pilih Warna Bidak</h2>
       <button class="btn btn-white" onclick="selectColor('white')">Putih (Main Pertama)</button>
       <button class="btn btn-black" onclick="selectColor('black')">Hitam (Respon Balas)</button>
     </div>
   </div>
 
-  <h2>Penasihat Catur Taktis</h2>
+  <h3 style="margin: 5px 0;">Penasihat Catur Taktis</h3>
   
   <div id="board-container">
     <div id="board"></div>
+    
     <div class="info-card">
-      <p>Sisi Kamu: <b id="playerColor">-</b> | Status: <span id="turnStatus" class="turn-info">Menunggu...</span></p>
-      <p>Rekomendasi Langkah Kamu: <span id="recommendation" class="highlight">-</span></p>
-      <div style="margin-top: 15px;">
-        <button class="btn btn-action" onclick="undoMove()">Undo (Batal Langkah)</button>
-        <button class="btn btn-danger" onclick="resetGame()">Reset Ulang</button>
+      <p style="margin: 5px 0;">Sisi Kamu: <b id="playerColor">-</b> | Status: <span id="turnStatus" class="turn-info">Menunggu...</span></p>
+      
+      <!-- Pengaturan Kecepatan -->
+      <div style="margin: 10px 0; background: #2b2b36; padding: 8px; border-radius: 6px;">
+        <label for="speedMode">Mode Game: </label>
+        <select id="speedMode" style="background: #1e1e24; color: #fff; border: 1px solid #555;">
+          <option value="12">Santai (Akurasi Tinggi)</option>
+          <option value="6" selected>Kilat / Blitz (Respon Cepat)</option>
+          <option value="3">Peluru / Bullet (Respon Instan)</option>
+        </select>
+        <br>
+        <label style="font-size: 13px; margin-top: 5px; display: inline-block;">
+          <input type="checkbox" id="voiceToggle" checked> 🔊 Panggil Langkah (Suara)
+        </label>
+      </div>
+
+      <p style="margin: 5px 0;">Rekomendasi Langkah:</p>
+      <span id="recommendation" class="highlight">-</span>
+
+      <div style="margin-top: 12px;">
+        <button class="btn btn-action" onclick="undoMove()">Undo</button>
+        <button class="btn btn-danger" onclick="resetGame()">Reset</button>
       </div>
     </div>
   </div>
@@ -82,9 +100,7 @@
 
       if (move === null) return 'snapback';
 
-      // Sinkronkan posisi papan secara visual untuk memperbarui posisi Benteng saat rokade
       board.position(game.fen());
-
       updateGameState();
     }
 
@@ -100,11 +116,22 @@
       document.getElementById('modal').style.display = 'flex';
     }
 
+    function speakMove(text) {
+      var isVoiceOn = document.getElementById('voiceToggle').checked;
+      if (isVoiceOn && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel(); // Hentikan suara sebelumnya jika beruntun
+        var utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'id-ID';
+        utterance.rate = 1.2; // Mempercepat tempo bicara untuk mode Blitz/Bullet
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
     function updateGameState() {
       var currentTurn = game.turn() === 'w' ? 'white' : 'black';
       
       if (game.game_over()) {
-        document.getElementById('turnStatus').innerText = "Permainan Selesai!";
+        document.getElementById('turnStatus').innerText = "Selesai!";
         document.getElementById('recommendation').innerText = "Game Over";
         return;
       }
@@ -113,33 +140,39 @@
         document.getElementById('turnStatus').innerText = "GILIRAN KAMU!";
         
         if (game.history().length === 0 && playerColor === 'white') {
-          document.getElementById('recommendation').innerText = "E2 ➔ E4 (Pembukaan Pembunuh)";
+          var moveText = "E2 KE E4";
+          document.getElementById('recommendation').innerText = moveText;
+          speakMove(moveText);
         } else {
           fetchBestMove(game.fen());
         }
       } else {
         document.getElementById('turnStatus').innerText = "GILIRAN LAWAN";
-        document.getElementById('recommendation').innerText = "Masukkan langkah adikmu di papan...";
+        document.getElementById('recommendation').innerText = "Input langkah musuh...";
       }
     }
 
     function fetchBestMove(fen) {
-      document.getElementById('recommendation').innerText = "Menganalisis langkah mematikan...";
+      document.getElementById('recommendation').innerText = "Menganalisis...";
+      var depth = document.getElementById('speedMode').value;
       
-      fetch('https://stockfish.online/api/s/v2.php?fen=' + encodeURIComponent(fen) + '&depth=10')
+      fetch('https://stockfish.online/api/s/v2.php?fen=' + encodeURIComponent(fen) + '&depth=' + depth)
         .then(res => res.json())
         .then(data => {
           if (data.success && data.bestmove) {
             var rawMove = data.bestmove.split(' ')[1];
-            var from = rawMove.substring(0, 2);
-            var to = rawMove.substring(2, 4);
-            document.getElementById('recommendation').innerText = from.toUpperCase() + " ➔ " + to.toUpperCase();
+            var from = rawMove.substring(0, 2).toUpperCase();
+            var to = rawMove.substring(2, 4).toUpperCase();
+            
+            var moveText = from + " KE " + to;
+            document.getElementById('recommendation').innerText = moveText;
+            speakMove(moveText);
           } else {
             document.getElementById('recommendation').innerText = "Tidak ada rekomendasi";
           }
         })
         .catch(err => {
-          document.getElementById('recommendation').innerText = "Gagal terhubung ke engine.";
+          document.getElementById('recommendation').innerText = "Gagal terhubung.";
         });
     }
   </script>
