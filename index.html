@@ -24,11 +24,9 @@
 </head>
 <body>
 
-  <!-- Modal Pilih Warna -->
   <div id="modal">
     <div class="modal-box">
       <h2>Pilih Warna Bidak Kamu</h2>
-      <p>Pilih warna yang kamu pakai saat melawan adikmu:</p>
       <button class="btn btn-white" onclick="selectColor('white')">Putih (Main Pertama)</button>
       <button class="btn btn-black" onclick="selectColor('black')">Hitam (Respon Balas)</button>
     </div>
@@ -42,13 +40,12 @@
       <p>Sisi Kamu: <b id="playerColor">-</b> | Status: <span id="turnStatus" class="turn-info">Menunggu...</span></p>
       <p>Rekomendasi Langkah Kamu: <span id="recommendation" class="highlight">-</span></p>
       <div style="margin-top: 15px;">
-        <button class="btn btn-action" onclick="undoMove()">Undo (Batal Langkah)</button>
-        <button class="btn btn-danger" onclick="resetGame()">Reset Ulang</button>
+        <button class="btn btn-action" onclick="undoMove()">Undo</button>
+        <button class="btn btn-danger" onclick="resetGame()">Reset</button>
       </div>
     </div>
   </div>
 
-  <!-- Library JS -->
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
   <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
@@ -67,51 +64,50 @@
         draggable: true,
         position: 'start',
         orientation: playerColor,
-        onDrop: handleMove
+        onDrop: handleMove,
+        // FIX: Menambahkan source gambar dari CDN
+        pieceTheme: 'https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/img/chesspieces/wikipedia/{piece}.png'
       });
 
       updateGameState();
     }
 
     function handleMove(source, target) {
-      var move = game.move({
-        from: source,
-        to: target,
-        promotion: 'q'
-      });
-
+      var move = game.move({ from: source, to: target, promotion: 'q' });
       if (move === null) return 'snapback';
-
       updateGameState();
     }
 
-    function undoMove() {
-      game.undo();
-      board.position(game.fen());
-      updateGameState();
-    }
-
-    function resetGame() {
-      game.reset();
-      board.position('start');
-      document.getElementById('modal').style.display = 'flex';
-    }
+    function undoMove() { game.undo(); board.position(game.fen()); updateGameState(); }
+    function resetGame() { game.reset(); board.position('start'); document.getElementById('modal').style.display = 'flex'; }
 
     function updateGameState() {
       var currentTurn = game.turn() === 'w' ? 'white' : 'black';
-      
-      if (game.game_over()) {
-        document.getElementById('turnStatus').innerText = "Permainan Selesai!";
-        document.getElementById('recommendation').innerText = "Game Over";
-        return;
-      }
+      if (game.game_over()) { document.getElementById('turnStatus').innerText = "Game Over!"; document.getElementById('recommendation').innerText = "-"; return; }
 
-      // Jika giliran kamu, panggil analisis Stockfish
       if (currentTurn === playerColor) {
         document.getElementById('turnStatus').innerText = "GILIRAN KAMU!";
-        
-        if (game.history().length === 0 && playerColor === 'white') {
-          document.getElementById('recommendation').innerText = "E2 ➔ E4 (Pembukaan Pembunuh)";
+        fetchBestMove(game.fen());
+      } else {
+        document.getElementById('turnStatus').innerText = "GILIRAN LAWAN";
+        document.getElementById('recommendation').innerText = "Masukkan langkah adikmu...";
+      }
+    }
+
+    function fetchBestMove(fen) {
+      document.getElementById('recommendation').innerText = "Menganalisis...";
+      fetch('https://stockfish.online/api/s/v2.php?fen=' + encodeURIComponent(fen) + '&depth=10')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.bestmove) {
+            var rawMove = data.bestmove.split(' ')[1];
+            document.getElementById('recommendation').innerText = rawMove.substring(0, 2).toUpperCase() + " ➔ " + rawMove.substring(2, 4).toUpperCase();
+          }
+        });
+    }
+  </script>
+</body>
+</html>
         } else {
           fetchBestMove(game.fen());
         }
