@@ -16,9 +16,9 @@
     .btn-action { background: #3a86ff; color: #fff; }
     .btn:hover { transform: scale(1.05); }
     #board-container { display: flex; flex-direction: column; align-items: center; margin-top: 10px; }
-    #board { width: 400px; max-width: 90vw; }
+    #board { width: 400px; max-width: 95vw; }
     .info-card { background: #1e1e24; margin-top: 15px; padding: 15px 25px; border-radius: 8px; max-width: 400px; width: 90vw; border: 1px solid #333; }
-    .highlight { color: #00ff87; font-weight: bold; font-size: 22px; display: block; margin-top: 5px; }
+    .highlight { color: #00ff87; font-weight: bold; font-size: 20px; display: block; margin-top: 5px; }
     .turn-info { color: #ffbe0b; font-weight: bold; }
   </style>
 </head>
@@ -27,8 +27,8 @@
   <div id="modal">
     <div class="modal-box">
       <h2>Pilih Warna Bidak Kamu</h2>
-      <button class="btn btn-white" onclick="selectColor('white')">Putih (Main Pertama)</button>
-      <button class="btn btn-black" onclick="selectColor('black')">Hitam (Respon Balas)</button>
+      <button class="btn btn-white" onclick="selectColor('white')">Putih</button>
+      <button class="btn btn-black" onclick="selectColor('black')">Hitam</button>
     </div>
   </div>
 
@@ -37,12 +37,10 @@
   <div id="board-container">
     <div id="board"></div>
     <div class="info-card">
-      <p>Sisi Kamu: <b id="playerColor">-</b> | Status: <span id="turnStatus" class="turn-info">Menunggu...</span></p>
-      <p>Rekomendasi Langkah Kamu: <span id="recommendation" class="highlight">-</span></p>
-      <div style="margin-top: 15px;">
-        <button class="btn btn-action" onclick="undoMove()">Undo</button>
-        <button class="btn btn-danger" onclick="resetGame()">Reset</button>
-      </div>
+      <p>Status: <span id="turnStatus" class="turn-info">Menunggu...</span></p>
+      <p>Rekomendasi: <span id="recommendation" class="highlight">-</span></p>
+      <button class="btn btn-action" onclick="undoMove()">Undo</button>
+      <button class="btn btn-danger" onclick="resetGame()">Reset</button>
     </div>
   </div>
 
@@ -58,17 +56,15 @@
     function selectColor(color) {
       playerColor = color;
       document.getElementById('modal').style.display = 'none';
-      document.getElementById('playerColor').innerText = color === 'white' ? 'Putih' : 'Hitam';
-
+      
+      // Menggunakan CDN resmi untuk gambar
       board = Chessboard('board', {
         draggable: true,
         position: 'start',
         orientation: playerColor,
         onDrop: handleMove,
-        // FIX: Menambahkan source gambar dari CDN
-        pieceTheme: 'https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/img/chesspieces/wikipedia/{piece}.png'
+        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
       });
-
       updateGameState();
     }
 
@@ -83,14 +79,14 @@
 
     function updateGameState() {
       var currentTurn = game.turn() === 'w' ? 'white' : 'black';
-      if (game.game_over()) { document.getElementById('turnStatus').innerText = "Game Over!"; document.getElementById('recommendation').innerText = "-"; return; }
+      if (game.game_over()) { document.getElementById('turnStatus').innerText = "Game Over!"; return; }
 
       if (currentTurn === playerColor) {
         document.getElementById('turnStatus').innerText = "GILIRAN KAMU!";
         fetchBestMove(game.fen());
       } else {
         document.getElementById('turnStatus').innerText = "GILIRAN LAWAN";
-        document.getElementById('recommendation').innerText = "Masukkan langkah adikmu...";
+        document.getElementById('recommendation').innerText = "Masukkan langkah adik...";
       }
     }
 
@@ -100,41 +96,9 @@
         .then(res => res.json())
         .then(data => {
           if (data.success && data.bestmove) {
-            var rawMove = data.bestmove.split(' ')[1];
-            document.getElementById('recommendation').innerText = rawMove.substring(0, 2).toUpperCase() + " ➔ " + rawMove.substring(2, 4).toUpperCase();
+            var m = data.bestmove.split(' ')[1];
+            document.getElementById('recommendation').innerText = m.substring(0, 2).toUpperCase() + " ➔ " + m.substring(2, 4).toUpperCase();
           }
-        });
-    }
-  </script>
-</body>
-</html>
-        } else {
-          fetchBestMove(game.fen());
-        }
-      } else {
-        // Jika giliran lawan, minta pengguna memasukkan langkah lawan
-        document.getElementById('turnStatus').innerText = "GILIRAN LAWAN";
-        document.getElementById('recommendation').innerText = "Masukkan langkah adikmu di papan...";
-      }
-    }
-
-    function fetchBestMove(fen) {
-      document.getElementById('recommendation').innerText = "Menganalisis langkah mematikan...";
-      
-      fetch('https://stockfish.online/api/s/v2.php?fen=' + encodeURIComponent(fen) + '&depth=10')
-        .then(res => res.json())
-        .then(data => {
-          if (data.success && data.bestmove) {
-            var rawMove = data.bestmove.split(' ')[1];
-            var from = rawMove.substring(0, 2);
-            var to = rawMove.substring(2, 4);
-            document.getElementById('recommendation').innerText = from.toUpperCase() + " ➔ " + to.toUpperCase();
-          } else {
-            document.getElementById('recommendation').innerText = "Tidak ada rekomendasi";
-          }
-        })
-        .catch(err => {
-          document.getElementById('recommendation').innerText = "Gagal terhubung ke engine.";
         });
     }
   </script>
